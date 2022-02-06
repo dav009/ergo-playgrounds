@@ -47,12 +47,14 @@ trait TransactionDsl extends BoxDsl {
     fee: Long,
     sendChangeTo: Address
   ): UnsignedErgoLikeTransaction = {
+
+    
     TransactionOperations.buildUnsignedErgoTx(
       inputs.toIndexedSeq,
       IndexedSeq(),
       outputs,
       fee,
-      Some(P2PKAddress(sendChangeTo.proveDlog)),
+      Some(P2PKAddress(sendChangeTo.getPublicKey())),
       0
     )
   }
@@ -69,7 +71,7 @@ trait TransactionDsl extends BoxDsl {
       dataInputs.toIndexedSeq,
       outputs,
       fee,
-      Some(P2PKAddress(sendChangeTo.proveDlog)),
+      Some(P2PKAddress(sendChangeTo.getPublicKey())),
       0
     )
   }

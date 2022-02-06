@@ -1,7 +1,9 @@
 package org.ergoplatform.playgrounds.examples
+import org.ergoplatform.playgroundenv.utils.ErgoScriptCompiler
+
 
 object AssetsAtomicExchangePlayground {
-  import org.ergoplatform.compiler.ErgoScalaCompiler._
+  //import org.ergoplatform.compiler.ErgoScalaCompiler._
   import org.ergoplatform.playground._
 
   def buyerOrder(
@@ -12,9 +14,9 @@ object AssetsAtomicExchangePlayground {
     txFee: Long
   ) = {
 
-    val buyerPk = buyerParty.wallet.getAddress.pubKey
+    val buyerPk = buyerParty.wallet.getAddress.getPublicKey
 
-    val BuyerContract = contract {
+    val BuyerContract = """
       buyerPk || {
         (OUTPUTS.nonEmpty && OUTPUTS(0).R4[Coll[Byte]].isDefined) && {
           val tokens = OUTPUTS(0).tokens
@@ -26,9 +28,12 @@ object AssetsAtomicExchangePlayground {
           tokenDataCorrect && OUTPUTS(0).propositionBytes == buyerPk.propBytes && knownId
         }
       }
-    }
+    """
 
-    val buyerBidBox = Box(value = ergAmount, script = BuyerContract)
+    val buyerContractEnv: ScriptEnv = Map("buyerPk" -> buyerPk, "token" -> token)
+    val buyerContractCompiled = ErgoScriptCompiler.compile(buyerContractEnv, BuyerContract)
+
+    val buyerBidBox = Box(value = ergAmount, script = buyerContractCompiled)
 
     Transaction(
       inputs       = buyerParty.selectUnspentBoxes(toSpend = ergAmount + txFee),
@@ -47,9 +52,9 @@ object AssetsAtomicExchangePlayground {
     txFee: Long
   ) = {
 
-    val sellerPk = sellerParty.wallet.getAddress.pubKey
+    val sellerPk = sellerParty.wallet.getAddress.getPublicKey
 
-    val SellerContract = contract {
+    val SellerContract =  """
       sellerPk || (
         OUTPUTS.size > 1 &&
         OUTPUTS(1).R4[Coll[Byte]].isDefined
@@ -59,7 +64,10 @@ object AssetsAtomicExchangePlayground {
         knownBoxId &&
         OUTPUTS(1).propositionBytes == sellerPk.propBytes
       }
-    }
+    """
+
+    val sellerContractEnv: ScriptEnv = Map("sellerPk" -> sellerPk, "ergAmount" -> ergAmount)
+    val sellerContractCompiled = ErgoScriptCompiler.compile(sellerContractEnv, SellerContract)
 
     val sellerBalanceBoxes = sellerParty.selectUnspentBoxes(
       toSpend       = dexFee + txFee,
@@ -69,7 +77,7 @@ object AssetsAtomicExchangePlayground {
     val sellerAskBox = Box(
       value  = dexFee,
       token  = (token -> tokenAmount),
-      script = SellerContract
+      script = sellerContractCompiled
     )
 
     Transaction(
@@ -140,14 +148,14 @@ object AssetsAtomicExchangePlayground {
       Box(
         value    = sellerAskNanoErgs,
         register = (R4 -> sellOrderTransactionSigned.outputs(0).id),
-        script   = contract(sellerParty.wallet.getAddress.pubKey)
+        script   = ErgoScriptCompiler.contract(sellerParty.wallet.getAddress.getPublicKey)
       )
 
     val buyerOutBox = Box(
       value    = buyerSwapBoxValue,
       token    = (token -> buyerBidTokenAmount),
       register = (R4 -> buyOrderTransactionSigned.outputs(0).id),
-      script   = contract(buyerParty.wallet.getAddress.pubKey)
+      script   = ErgoScriptCompiler.contract(buyerParty.wallet.getAddress.getPublicKey)
     )
 
     val dexParty = blockchainSim.newParty("DEX")
@@ -157,7 +165,7 @@ object AssetsAtomicExchangePlayground {
 
     val dexFeeOutBox = Box(
       value  = dexFee - swapTxFee,
-      script = contract(dexParty.wallet.getAddress.pubKey)
+      script = ErgoScriptCompiler.contract(dexParty.wallet.getAddress.getPublicKey)
     )
 
     val swapTransaction = Transaction(
@@ -211,7 +219,7 @@ object AssetsAtomicExchangePlayground {
       Box(
         value  = buyersBidNanoErgs,
         token  = (blockchainSim.newToken("DEXCNCL") -> 1L),
-        script = contract(buyerParty.wallet.getAddress.pubKey)
+        script = ErgoScriptCompiler.contract(buyerParty.wallet.getAddress.getPublicKey)
       )
 
     val cancelBuyTransaction = Transaction(
@@ -261,7 +269,7 @@ object AssetsAtomicExchangePlayground {
       Box(
         value  = sellerDexFee,
         token  = (token -> sellerAskTokenAmount),
-        script = contract(sellerParty.wallet.getAddress.pubKey)
+        script = ErgoScriptCompiler.contract(sellerParty.wallet.getAddress.getPublicKey)
       )
 
     val cancelSellTransaction = Transaction(

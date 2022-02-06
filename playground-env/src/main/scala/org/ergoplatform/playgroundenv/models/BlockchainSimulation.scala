@@ -1,7 +1,6 @@
 package org.ergoplatform.playgroundenv.models
 
 import org.ergoplatform.ErgoBox.BoxId
-import org.ergoplatform.compiler.ErgoScalaCompiler
 import org.ergoplatform.wallet.protocol.context.{ErgoLikeParameters, ErgoLikeStateContext}
 import org.ergoplatform.{ErgoBox, ErgoLikeTransaction}
 import scorex.crypto.authds.ADDigest

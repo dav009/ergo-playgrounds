@@ -1,9 +1,14 @@
 package org.ergoplatform.playgrounds.examples
+import org.ergoplatform.playgroundenv.utils.ErgoScriptCompiler
+
+
 
 object DEXPlayground {
-  import org.ergoplatform.compiler.ErgoScalaCompiler._
-  import org.ergoplatform.playgroundenv.utils.ErgoScriptCompiler
+//  import org.ergoplatform.playgroundenv.utils.ErgoScriptCompiler
   import org.ergoplatform.playground._
+
+
+
 
   def buyerContract(
     buyerParty: Party,
@@ -12,7 +17,7 @@ object DEXPlayground {
     dexFeePerToken: Long
   ) = {
 
-    val buyerPk = buyerParty.wallet.getAddress.pubKey
+    val buyerPk = buyerParty.wallet.getAddress.getPublicKey
 
     val buyerContractEnv: ScriptEnv =
       Map("buyerPk" -> buyerPk, "tokenId" -> token.tokenId)
@@ -51,6 +56,8 @@ object DEXPlayground {
     }
       """.stripMargin
 
+
+   
     ErgoScriptCompiler.compile(buyerContractEnv, buyerScript)
   }
 
@@ -61,7 +68,7 @@ object DEXPlayground {
     dexFeePerToken: Long
   ) = {
 
-    val sellerPk = sellerParty.wallet.getAddress.pubKey
+    val sellerPk = sellerParty.wallet.getAddress.getPublicKey
 
     val sellerContractEnv: ScriptEnv =
       Map("sellerPk" -> sellerPk, "tokenId" -> token.tokenId)
@@ -106,6 +113,7 @@ object DEXPlayground {
     val blockchainSim = newBlockChainSimulationScenario(
       "SwapWithPartialAndThenTotalMatching"
     )
+
 
     val token = blockchainSim.newToken("TKN")
 
@@ -190,12 +198,15 @@ object DEXPlayground {
 
     blockchainSim.send(sellOrderTxSigned)
 
+
+
+
     val sellerTokenAmountSold       = sellerAskTokenAmount / 2
     val sellerDexFeeForPartialMatch = sellerDexFeePerToken * sellerTokenAmountSold
     val sellerOutBoxPartialMatch = Box(
       value    = sellerTokenAmountSold * sellerAskTokenPrice,
       register = (R4 -> sellOrderTxSigned.outputs(0).id),
-      script   = contract(sellerParty.wallet.getAddress.pubKey)
+      script   = ErgoScriptCompiler.contract(sellerParty.wallet.getAddress.getPublicKey)
     )
 
     // reuse old contract, nothing is changed
@@ -214,7 +225,7 @@ object DEXPlayground {
       value    = buyerSwapBoxValue,
       token    = (token -> buyerTokenAmountBought),
       register = (R4 -> buyOrderTxSigned.outputs(0).id),
-      script   = contract(buyerParty.wallet.getAddress.pubKey)
+      script   = ErgoScriptCompiler.contract(buyerParty.wallet.getAddress.getPublicKey)
     )
 
     // reuse old contract, nothing is changed
@@ -234,7 +245,7 @@ object DEXPlayground {
 
     val dexFeeOutBoxForPartialMatching = Box(
       value  = dexFeeForPartialMatching,
-      script = contract(dexParty.wallet.getAddress.pubKey)
+      script = ErgoScriptCompiler.contract(dexParty.wallet.getAddress.getPublicKey())
     )
 
     val swapTxPartialMatching = Transaction(
@@ -270,7 +281,7 @@ object DEXPlayground {
     val sellerOutBoxForTotalMatching = Box(
       value    = sellerTokenAmountSoldInTotalMatching * sellerAskTokenPrice,
       register = (R4 -> sellOrderAfterPartialMatching.id),
-      script   = contract(sellerParty.wallet.getAddress.pubKey)
+      script   = ErgoScriptCompiler.contract(sellerParty.wallet.getAddress.getPublicKey)
     )
 
     val buyerTokenAmountBoughtInTotalMatching = sellerTokenAmountSoldInTotalMatching
@@ -279,7 +290,7 @@ object DEXPlayground {
       value    = buyerSwapBoxValue,
       token    = (token -> buyerTokenAmountBoughtInTotalMatching),
       register = (R4 -> buyOrderAfterPartialMatching.id),
-      script   = contract(buyerParty.wallet.getAddress.pubKey)
+      script   = ErgoScriptCompiler.contract(buyerParty.wallet.getAddress.getPublicKey)
     )
 
     val swapTxFeeForTotalMatching = MinTxFee
@@ -287,7 +298,7 @@ object DEXPlayground {
 
     val dexFeeOutBoxForTotalMatching = Box(
       value  = dexFeeForTotalMatching,
-      script = contract(dexParty.wallet.getAddress.pubKey)
+      script = ErgoScriptCompiler.contract(dexParty.wallet.getAddress.getPublicKey)
     )
 
     val swapTxForTotalMatching = Transaction(
@@ -365,7 +376,7 @@ object DEXPlayground {
       token = (blockchainSim.newToken("DEXCNCL") -> 1L),
       // as a workaround for https://github.com/ScorexFoundation/sigmastate-interpreter/issues/628
       register = (R4 -> buyOrderTxSigned.outputs(0).id),
-      script   = contract(buyerParty.wallet.getAddress.pubKey)
+      script   = ErgoScriptCompiler.contract(buyerParty.wallet.getAddress.getPublicKey)
     )
 
     val cancelBuyTransaction = Transaction(
@@ -437,7 +448,7 @@ object DEXPlayground {
       token = (token -> sellerAskTokenAmount),
       // as a workaround for https://github.com/ScorexFoundation/sigmastate-interpreter/issues/628
       register = (R4 -> sellOrderTxSigned.outputs(0).id),
-      script   = contract(sellerParty.wallet.getAddress.pubKey)
+      script   = ErgoScriptCompiler.contract(sellerParty.wallet.getAddress.getPublicKey)
     )
 
     val cancelSellTransaction = Transaction(

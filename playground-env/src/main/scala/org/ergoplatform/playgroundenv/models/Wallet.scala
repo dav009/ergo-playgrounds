@@ -1,4 +1,5 @@
 package org.ergoplatform.playgroundenv.models
+import org.ergoplatform.appkit.Address
 
 import org.ergoplatform.{ErgoLikeTransaction, UnsignedErgoLikeTransaction}
 

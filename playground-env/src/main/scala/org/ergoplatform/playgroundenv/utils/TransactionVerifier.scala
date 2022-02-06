@@ -36,17 +36,18 @@ object TransactionVerifier {
         val proof           = input.spendingProof
         val proverExtension = proof.extension
         val ctx = new ErgoLikeContext(
-          ErgoInterpreter.avlTreeFromDigest(stateContext.previousStateDigest),
-          stateContext.sigmaLastHeaders,
-          stateContext.sigmaPreHeader,
-          dataInputBoxes,
-          boxesToSpend,
-          tx,
-          idx,
-          proverExtension,
-          validationSettings,
-          MaxBlockCostDefault,
-          0
+          lastBlockUtxoRoot=ErgoInterpreter.avlTreeFromDigest(stateContext.previousStateDigest),
+          headers=stateContext.sigmaLastHeaders,
+          preHeader=stateContext.sigmaPreHeader,
+          dataBoxes=dataInputBoxes,
+          boxesToSpend=boxesToSpend,
+          spendingTransaction=tx,
+          selfIndex=idx,
+          extension=proverExtension,
+          validationSettings=validationSettings,
+          costLimit=MaxBlockCostDefault,
+          initCost=0,
+          activatedScriptVersion= 0.toByte//(stateContext.blockVersion - 1).toByte  
         )
 
         val res = verifier.verify(box.ergoTree, ctx, proof, tx.messageToSign).get

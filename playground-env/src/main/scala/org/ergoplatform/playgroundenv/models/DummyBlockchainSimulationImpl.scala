@@ -2,8 +2,8 @@ package org.ergoplatform.playgroundenv.models
 
 import org.ergoplatform.ErgoBox.BoxId
 import org.ergoplatform.{ErgoBox, ErgoLikeTransaction}
-import org.ergoplatform.compiler.ErgoScalaCompiler._
 import org.ergoplatform.wallet.protocol.context.{ErgoLikeParameters, ErgoLikeStateContext}
+import org.ergoplatform.appkit.Address
 import scorex.crypto.authds.ADDigest
 import scorex.crypto.hash.Digest32
 import scorex.util.encode.Base16
@@ -13,10 +13,55 @@ import sigmastate.interpreter.CryptoConstants
 import special.collection.Coll
 import special.sigma.{Header, PreHeader}
 import sigmastate.eval.Extensions._
+import org.ergoplatform.appkit.{NetworkType}
+import org.ergoplatform.appkit.impl.BlockchainContextBase
+import org.ergoplatform.restapi.client.ApiClient;
+import org.ergoplatform.restapi.client.NodeInfo;
 
 import scala.collection.mutable
 import org.ergoplatform.playgroundenv.dsl.ObjectGenerators
 import org.ergoplatform.playgroundenv.utils.TransactionVerifier
+import org.ergoplatform.ErgoLikeTransaction;
+import org.ergoplatform.ErgoLikeTransactionSerializer$;
+import org.ergoplatform.appkit.{SignedTransaction, UnsignedTransactionBuilder, InputBox, ErgoProverBuilder, ErgoWallet, PreHeaderBuilder, CoveringBoxes, ErgoToken};
+import org.ergoplatform.restapi.client.ApiClient;
+import org.ergoplatform.restapi.client.NodeInfo;
+import sigmastate.Values;
+import sigmastate.serialization.SigmaSerializer$;
+import sigmastate.utils.SigmaByteReader;
+import java.util;
+
+/*
+class DummyBlockchainContext extends BlockchainContextBase(NetworkType.TESTNET) {
+   
+
+  override def getNodeInfo: NodeInfo = ???
+
+
+  override def signedTxFromJson(json: String): SignedTransaction = ???
+
+  override def newTxBuilder(): UnsignedTransactionBuilder = ???
+
+  override def getBoxesById(boxIds: String*): Array[InputBox] = ???
+
+  override def newProverBuilder(): ErgoProverBuilder = ???
+
+  override def getHeight: Int = ???
+
+  override def getWallet: ErgoWallet = ???
+
+  override def sendTransaction(tx: SignedTransaction): String = ???
+
+  override def createPreHeader(): PreHeaderBuilder = ???
+
+  override def getCoveringBoxesFor( address: Address,  amountToSpend: Long,  tokensToSpend: List[ErgoToken]): CoveringBoxes = ???
+
+  override def getUnspentBoxesFor(address: Address,
+                                  offset: Int,
+                                  limit: Int): util.List[InputBox] = ???
+
+
+}*/
 
 case class DummyBlockchainSimulationImpl(scenarioName: String)
   extends BlockchainSimulation {
@@ -27,11 +72,15 @@ case class DummyBlockchainSimulationImpl(scenarioName: String)
     new mutable.ArrayBuffer[ErgoBox]()
   private val tokenNames: mutable.Map[ModifierId, String] = mutable.Map()
   private var chainHeight: Int                            = 0
-
+  private var nextBoxId: Short = 0
   private def getUnspentBoxesFor(address: Address): List[ErgoBox] =
     unspentBoxes.filter { b =>
-      contract(address.pubKey).ergoTree == b.ergoTree
+      address.getErgoAddress.script == b.ergoTree
     }.toList
+
+  def BlockChainContext()={
+
+  }
 
   def stateContext: ErgoLikeStateContext = new ErgoLikeStateContext {
 
@@ -87,13 +136,16 @@ case class DummyBlockchainSimulationImpl(scenarioName: String)
     tokensToSpend.foreach { t =>
       tokenNames += (t.token.tokenId.toArray.toModifierId -> t.token.tokenName)
     }
-    val b = ErgoBox(
+    val b = new ErgoBox(
+      index          = nextBoxId,
       value          = toSpend,
-      ergoTree       = contract(address.pubKey).ergoTree,
+      ergoTree       = address.getErgoAddress.script,
       creationHeight = chainHeight,
-      additionalTokens =
-        tokensToSpend.map(ta => (Digest32 @@ ta.token.tokenId.toArray, ta.tokenAmount))
+      transactionId = ErgoBox.allZerosModifierId,
+     // additionalTokens =
+     //   tokensToSpend.map(ta => (Digest32 @@ ta.token.tokenId.toArray, ta.tokenAmount))
     )
+    nextBoxId = (nextBoxId + 1).toShort
     unspentBoxes.append(b)
     boxes.append(b)
   }
@@ -103,7 +155,7 @@ case class DummyBlockchainSimulationImpl(scenarioName: String)
     toSpend: Long,
     tokensToSpend: List[TokenAmount]
   ): List[ErgoBox] = {
-    val treeToFind = contract(address.pubKey).ergoTree
+    val treeToFind = address.getErgoAddress.script
     val filtered = unspentBoxes.filter { b =>
       b.ergoTree == treeToFind
     }.toList
@@ -118,7 +170,7 @@ case class DummyBlockchainSimulationImpl(scenarioName: String)
 
   override def newParty(name: String): Party = {
     val party = DummyPartyImpl(this, name)
-    val pk    = party.wallet.getAddress.proveDlog
+    val pk    = party.wallet.getAddress
     println(s"..$scenarioName: Creating new party: $name, pk: $pk")
     party
   }

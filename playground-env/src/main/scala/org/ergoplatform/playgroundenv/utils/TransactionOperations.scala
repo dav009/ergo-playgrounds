@@ -38,7 +38,7 @@ object TransactionOperations {
     )
     val feeOut = new ErgoBoxCandidate(
       actualFee,
-      ErgoScriptPredef.feeProposition(Parameters.MinerRewardDelay),
+      ErgoScriptPredef.feeProposition(Parameters.MinerRewardDelay_Testnet),
       currentHeight
     )
 
