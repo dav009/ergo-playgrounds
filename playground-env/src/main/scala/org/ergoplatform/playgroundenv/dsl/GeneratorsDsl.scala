@@ -11,7 +11,7 @@ import special.collection.Coll
 
 trait GeneratorsDsl {
 
-  def newBlockChainSimulationScenario(scenarioName: String): BlockchainSimulation = {
+  def newBlockChainSimulationScenario(scenarioName: String): DummyBlockchainSimulationImpl = {
     println(s"Creating scenario: $scenarioName")
     DummyBlockchainSimulationImpl(scenarioName)
   }

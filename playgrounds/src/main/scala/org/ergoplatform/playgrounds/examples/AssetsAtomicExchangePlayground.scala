@@ -1,6 +1,6 @@
 package org.ergoplatform.playgrounds.examples
 import org.ergoplatform.playgroundenv.utils.ErgoScriptCompiler
-
+/*
 
 object AssetsAtomicExchangePlayground {
   //import org.ergoplatform.compiler.ErgoScalaCompiler._
@@ -290,3 +290,4 @@ object AssetsAtomicExchangePlayground {
   refundSellOrderScenario
   refundBuyOrderScenario
 }
+ */

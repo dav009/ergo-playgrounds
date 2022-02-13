@@ -1,7 +1,7 @@
 package org.ergoplatform.playgrounds.examples
 import org.ergoplatform.playgroundenv.utils.ErgoScriptCompiler
 
-
+/*
 
 object DEXPlayground {
 //  import org.ergoplatform.playgroundenv.utils.ErgoScriptCompiler
@@ -468,3 +468,4 @@ object DEXPlayground {
   cancelSellOrderScenario
   cancelBuyOrderScenario
 }
+ */

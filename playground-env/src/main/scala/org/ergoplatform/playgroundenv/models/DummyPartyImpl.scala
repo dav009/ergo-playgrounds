@@ -1,12 +1,15 @@
 package org.ergoplatform.playgroundenv.models
 
 import org.ergoplatform.ErgoBox
-
-class DummyPartyImpl(blockchain: DummyBlockchainSimulationImpl, override val name: String)
+import  org.ergoplatform.appkit.impl.BlockchainContextBase
+import  org.ergoplatform.appkit.impl.BlockchainContextImpl
+import org.ergoplatform.appkit.{InputBox, BlockchainContext}
+import org.ergoplatform.appkit.{InputBox, BlockchainContext}
+class DummyPartyImpl(blockchain: DummyBlockchainSimulationImpl, ctx:BlockchainContext,  override val name: String)
   extends Party {
 
   override val wallet: Wallet =
-    new DummyWalletImpl(blockchain, s"$name Wallet")
+    new DummyWalletImpl(blockchain,  ctx.asInstanceOf[BlockchainContextBase], s"$name Wallet")
 
   override def generateUnspentBoxes(
     toSpend: Long,
@@ -23,7 +26,7 @@ class DummyPartyImpl(blockchain: DummyBlockchainSimulationImpl, override val nam
     toSpend: Long,
     tokensToSpend: List[TokenAmount]
   ): List[ErgoBox] =
-    blockchain.selectUnspentBoxesFor(wallet.getAddress, toSpend, tokensToSpend)
+    blockchain.selectUnspentBoxesFor(wallet.getAddress)
 
   override def printUnspentAssets(): Unit = {
     val coins  = blockchain.getUnspentCoinsFor(wallet.getAddress)
@@ -37,6 +40,6 @@ class DummyPartyImpl(blockchain: DummyBlockchainSimulationImpl, override val nam
 
 object DummyPartyImpl {
 
-  def apply(blockchain: DummyBlockchainSimulationImpl, name: String): DummyPartyImpl =
-    new DummyPartyImpl(blockchain, name)
+  def apply(blockchain: DummyBlockchainSimulationImpl,ctx:BlockchainContext, name: String): DummyPartyImpl =
+    new DummyPartyImpl(blockchain, ctx, name)
 }
